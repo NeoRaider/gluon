@@ -1,0 +1,62 @@
+From: Matthias Schiffer <mschiffer@universe-factory.net>
+Date: Thu, 21 May 2020 14:39:33 +0200
+Subject: musl: add malloc sanity checks to narrow down fastd crashes
+
+Signed-off-by: Matthias Schiffer <mschiffer@universe-factory.net>
+
+diff --git a/toolchain/musl/patches/600-malloc-sanity.patch b/toolchain/musl/patches/600-malloc-sanity.patch
+new file mode 100644
+index 0000000000000000000000000000000000000000..4fc29d439aae785130646e27ce4850d1ecb86e27
+--- /dev/null
++++ b/toolchain/musl/patches/600-malloc-sanity.patch
+@@ -0,0 +1,50 @@
++From 692e165532c9a9672780dd483b7883a93b752cc2 Mon Sep 17 00:00:00 2001
++Message-Id: <692e165532c9a9672780dd483b7883a93b752cc2.1590013004.git.mschiffer@universe-factory.net>
++From: Matthias Schiffer <mschiffer@universe-factory.net>
++Date: Wed, 20 May 2020 20:12:48 +0200
++Subject: [PATCH] malloc sanity checks
++
++---
++ src/malloc/malloc.c | 17 +++++++++++++++++
++ 1 file changed, 17 insertions(+)
++
++diff --git a/src/malloc/malloc.c b/src/malloc/malloc.c
++index 96982596b94d..8eebf9c2b400 100644
++--- a/src/malloc/malloc.c
+++++ b/src/malloc/malloc.c
++@@ -187,8 +187,18 @@ static int adjust_size(size_t *n)
++ 
++ static void unbin(struct chunk *c, int i)
++ {
+++	struct chunk *bin = BIN_TO_CHUNK(i);
+++
++ 	if (c->prev == c->next)
++ 		a_and_64(&mal.binmap, ~(1ULL<<i));
+++
+++	if (c->csize & C_INUSE)
+++		a_crash();
+++	if (c->prev != bin && c->prev->csize & C_INUSE)
+++		a_crash();
+++	if (c->next != bin && c->next->csize & C_INUSE)
+++		a_crash();
+++
++ 	c->prev->next = c->next;
++ 	c->next->prev = c->prev;
++ 	c->csize |= C_INUSE;
++@@ -486,6 +496,13 @@ void __bin_chunk(struct chunk *self)
++ 	next->psize = final_size;
++ 	unlock(mal.free_lock);
++ 
+++	if (self->csize & C_INUSE)
+++		a_crash();
+++	if (mal.bins[i].head != BIN_TO_CHUNK(i) && mal.bins[i].head->csize & C_INUSE)
+++		a_crash();
+++	if (mal.bins[i].tail != BIN_TO_CHUNK(i) && mal.bins[i].tail->csize & C_INUSE)
+++		a_crash();
+++
++ 	self->next = BIN_TO_CHUNK(i);
++ 	self->prev = mal.bins[i].tail;
++ 	self->next->prev = self;
++-- 
++2.26.2
++
