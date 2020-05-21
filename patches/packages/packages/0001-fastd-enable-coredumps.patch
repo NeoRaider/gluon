@@ -1,0 +1,26 @@
+From: Matthias Schiffer <mschiffer@universe-factory.net>
+Date: Thu, 21 May 2020 15:02:52 +0200
+Subject: fastd: enable coredumps
+
+Signed-off-by: Matthias Schiffer <mschiffer@universe-factory.net>
+
+diff --git a/net/fastd/patches/0003-enable-coredumps.patch b/net/fastd/patches/0003-enable-coredumps.patch
+new file mode 100644
+index 0000000000000000000000000000000000000000..16be0f9f58674f8a8bd7b038082925d8dd3a94f9
+--- /dev/null
++++ b/net/fastd/patches/0003-enable-coredumps.patch
+@@ -0,0 +1,14 @@
++diff --git a/doc/examples/openwrt/fastd.init b/doc/examples/openwrt/fastd.init
++index 4ba69ece9887..8e1e0e963f26 100644
++--- a/doc/examples/openwrt/fastd.init
+++++ b/doc/examples/openwrt/fastd.init
++@@ -24,6 +24,9 @@ TMP_FASTD=/tmp/fastd
++ FASTD_COMMAND=/usr/bin/fastd
++ 
++ 
+++ulimit -c unlimited
+++
+++
++ section_enabled() {
++ 	config_get_bool enabled "$1" 'enabled' 0
++ 	[ $enabled -gt 0 ]
